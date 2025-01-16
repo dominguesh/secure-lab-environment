@@ -2,11 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Lab Environment Documentation</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Environment Architecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        .diagram-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <h1>Lab Environment Architecture</h1>
-    <!-- Content will be added here -->
+
+    <div class="diagram-container">
+        <h2>Network Architecture</h2>
+        <div class="mermaid">
+        graph TB
+            Internet[Internet] --> FW[Firewall/NAT]
+            FW --> DMZ[DMZ Network<br/>10.0.1.0/24]
+            DMZ --> WS[Web Server<br/>10.0.1.10]
+            DMZ --> BST[Bastion Host<br/>10.0.1.20]
+            
+            subgraph Internal Network
+            direction TB
+                INT[Internal Network<br/>172.16.0.0/24]
+                BST --> INT
+                INT --> APP[App Server<br/>172.16.0.10]
+                INT --> DEV[Dev Workstation<br/>172.16.0.21]
+            end
+            
+            subgraph Isolated Network
+            direction TB
+                ISO[Isolated Network<br/>192.168.1.0/24]
+                BST --> ISO
+                ISO --> DB[Database Server<br/>192.168.1.30]
+            end
+            
+            classDef network fill:#f9f,stroke:#333,stroke-width:2px
+            classDef server fill:#bbf,stroke:#333,stroke-width:2px
+            classDef security fill:#fb7,stroke:#333,stroke-width:2px
+            
+            class Internet,DMZ,INT,ISO network
+            class WS,APP,DB,DEV server
+            class FW,BST security
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <h2>Data Flow</h2>
+        <div class="mermaid">
+        sequenceDiagram
+            participant U as User
+            participant W as Web Server
+            participant B as Bastion Host
+            participant A as App Server
+            participant D as DB Server
+
+            U->>W: HTTPS Request
+            W->>B: Authentication Request
+            B->>A: Forward Request
+            A->>B: DB Access Request
+            B->>D: Secured DB Query
+            D->>B: Query Response
+            B->>A: Data Response
+            A->>B: Process Data
+            B->>W: Auth Response
+            W->>U: HTTPS Response
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <h2>PAM Implementation</h2>
+        <div class="mermaid">
+        graph LR
+            U[User] --> B[Bastion Host]
+            subgraph PAM Process
+                B --> Auth[Authentication]
+                Auth --> P[PAM Modules]
+                P --> AC[Access Control]
+                AC --> S[Session Management]
+            end
+            P --> L[Logging/Audit]
+            AC --> DB[Database Access]
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+        });
+    </script>
 </body>
 </html>
